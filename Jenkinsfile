@@ -11,6 +11,9 @@ pipeline {
 
     environment {
         SONAR_PROJECT_KEY = 'devops-demo'
+        AWS_REGION       = 'ap-south-1'
+        AWS_ACCOUNT_ID   = '825820235145'
+        ECR_REPOSITORY   = 'devops-demo'
     }
 
     stages {
@@ -25,7 +28,7 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-        
+
         stage('Archive WAR Artifact') {
             steps {
                 archiveArtifacts artifacts: 'target/devops-demo.war',
@@ -43,8 +46,8 @@ pipeline {
                             ${scannerHome}/bin/sonar-scanner \
                               -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                               -Dsonar.projectName='DevOps Demo' \
-                              -Dsonar.sources=src \
-                              -Dsonar.java.binaries=src
+                              -Dsonar.sources=src/main/java \
+                              -Dsonar.java.binaries=target/classes
                         """
                     }
                 }
@@ -73,16 +76,38 @@ pipeline {
                 '''
             }
         }
+
+        stage('Push Image to ECR') {
+            steps {
+                sh '''
+                    set -eu
+
+                    ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                    LOCAL_IMAGE="devops-demo:${BUILD_NUMBER}"
+                    ECR_IMAGE="${ECR_REGISTRY}/${ECR_REPOSITORY}:${BUILD_NUMBER}"
+
+                    aws ecr get-login-password \
+                      --region "${AWS_REGION}" |
+                      docker login \
+                        --username AWS \
+                        --password-stdin "${ECR_REGISTRY}"
+
+                    docker tag "${LOCAL_IMAGE}" "${ECR_IMAGE}"
+                    docker push "${ECR_IMAGE}"
+
+                    echo "Successfully pushed ${ECR_IMAGE}"
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Build, analysis, Docker image creation, and security scan completed.'
+            echo 'WAR build, code analysis, Docker image scan, and ECR push completed successfully.'
         }
 
         failure {
-            echo 'Pipeline failed. Check the console output.'
+            echo 'Pipeline failed. Check the Console Output for details.'
         }
     }
 }
-

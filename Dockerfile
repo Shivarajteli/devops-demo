@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-noble
-WORKDIR /app
-COPY src/Hello.class Hello.class
-CMD ["java", "-cp", "/app", "Hello"]
+FROM tomcat:10.1-jre21-temurin-noble
+
+COPY target/devops-demo.war /usr/local/tomcat/webapps/ROOT.war
+
