@@ -20,19 +20,15 @@ pipeline {
             }
         }
 
-        stage('Compile Java') {
+        stage('Build WAR with Maven') {
             steps {
-                sh '''
-                    mkdir -p src
-                    javac src/Hello.java
-                    java -cp src Hello
-                '''
+                sh 'mvn clean package'
             }
         }
-
-        stage('Archive Build Artifact') {
+        
+        stage('Archive WAR Artifact') {
             steps {
-                archiveArtifacts artifacts: 'src/Hello.class',
+                archiveArtifacts artifacts: 'target/devops-demo.war',
                                  fingerprint: true
             }
         }
