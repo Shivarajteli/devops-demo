@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -64,14 +63,30 @@ pipeline {
                 '''
             }
         }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    TMPDIR=/var/tmp/trivy-tmp trivy --config /dev/null image \
+                      --ignorefile /dev/null \
+                      --scanners vuln \
+                      --severity HIGH,CRITICAL \
+                      --exit-code 1 \
+                      --format table \
+                      devops-demo:${BUILD_NUMBER}
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Build, analysis, and Docker image creation completed.'
+            echo 'Build, analysis, Docker image creation, and security scan completed.'
         }
+
         failure {
             echo 'Pipeline failed. Check the console output.'
         }
     }
 }
+
