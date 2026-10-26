@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: 825820235145.dkr.ecr.ap-south-1.amazonaws.com/devops-demo
-  tag: "REPLACE_WITH_BUILD_NUMBER"
+  tag: "11"
   pullPolicy: IfNotPresent
 
 imagePullSecrets:
